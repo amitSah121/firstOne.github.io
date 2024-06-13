@@ -1,0 +1,80 @@
+<html>
+  <head>
+    <title>Chat App</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="Keywords" content="index">
+    <meta name="Description" content="it is just an index directory">
+    <link rel="stylesheet" type="text/css" href=".css/font-awesome.min.css"/>
+    <link rel="stylesheet" type="text/css" href="./css/w3.css"/>
+    <script src="./js/w3.js"></script>
+    <style>
+      a{
+        text-decoration:none;
+      }
+    </style>
+  </head>
+  <body class="w3-container w3-padding w3-indigo">
+    <form class="w3-bar-block w3-container" id="chat">
+      <div class="w3-container w3-center">
+        <label class="w3-xxlarge"><b>Chat App</b></label>
+      </div>
+      <textarea class="w3-input w3-pale-yellow w3-round" rows="3" id="type" style="resize:none"></textarea>
+      <button class="w3-blue w3-center w3-bar-item" type="submit">Send</button>
+    </form>
+    <div class="w3-container w3-white" style="height:70vh">
+      <ul class="w3-ul" id="chat_box">
+        <li w3-repeat="chats">{{text}}</li>
+      </ul>
+    </div>
+
+    <script type="text/javascript">
+      let number_of_items = 100;
+      let cross_origin_properties = {    
+        method: 'GET',    
+        withCredentials: true,    
+        crossorigin: true,    
+        mode: 'cors',       
+      };
+      let username = "games";
+      let password = "games";
+      let db_name = "game";
+      let table_name = "chat";
+      let command = `select data from chat where id>(select count(id) from chat)-${number_of_items}`;
+      let func = "execute_command_on_table";
+      let url_prefix = "https://103.211.202.111/backend/main.py?";
+
+      fetch(url_prefix+`username=${username}&password=${password}&func=${func}&command=${command}&db_name=${db_name}&table_name=${table_name}`,cross_origin_properties)
+      .then(data => data.json())
+      .then(json => {
+        // console.log(json)
+        let temp = {chats:[]}
+        let temp_s = json.values.substring(1,json.values.length-1).match(/\(.*?\)/g);
+        // console.log(temp_s);
+        for(let i=0 ; i<temp_s.length ; i++){
+          temp.chats.push({text:temp_s[i].substring(2,temp_s[i].length-3)});
+        }
+        // console.log(temp);
+        w3.displayObject("chat_box",temp);
+      });
+
+      document.querySelector("#chat button").addEventListener("click",e=>{
+        e.preventDefault();
+        e.target.innerHTML = "Sending...";
+        let text = document.querySelector("#chat textarea").value;
+        text = text.replace("(","");
+        text = text.replace(")","");
+        if(text != ""){
+          let temp_command = `insert into chat (data) values('${text}')`;
+          fetch(url_prefix+`username=${username}&password=${password}&func=${func}&command=${temp_command}&db_name=${db_name}&table_name=${table_name}`,cross_origin_properties)
+          .then(data => data.json())
+          .then(json => {
+            // console.log(json);
+            window.location.reload()
+          });
+        }
+      })
+    </script>
+  </body>
+</html>
